@@ -1,0 +1,127 @@
+<html lang="en">
+
+<head>
+    <script src="https://cdn.jsdelivr.net/npm/vue@2/dist/vue.js"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.js"></script>
+    <link href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/@mdi/font@6.x/css/materialdesignicons.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.min.css" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, minimal-ui">
+</head>
+
+<body>
+    
+    <div id="app2">
+    <v-app id="inspire">
+      <v-card class="overflow-hidden">
+        <v-app-bar
+          absolute
+          color="deep-purple accent-4"
+          dark
+          scroll-target="#scrolling-techniques-6"
+          style="height:fit-content;"
+        >
+          <v-app-bar-nav-icon></v-app-bar-nav-icon>
+    
+          <v-toolbar-title>Список репозиториев Github по названию профиля</v-toolbar-title>
+    
+          <v-spacer></v-spacer>
+          <v-form>
+            <v-container>
+                <v-row>
+                    <v-col
+                      cols="24"
+                      md="4"
+                    >
+                      <v-text-field
+                        v-model="username"
+                        :counter="38"
+                        required
+                      ></v-text-field>
+                    </v-col>
+                    <v-col cols="8" md="4"> <v-btn v-on:click="send_repo_name()"
+                        color="primary"
+                        elevation="2"
+                        rounded
+                      >Показать репозитории</v-btn></v-col>
+                  </v-row>
+                </v-container>
+              </v-form>
+            
+        </v-app-bar>
+        <v-main>
+            <v-container>
+                 
+            </v-container>
+            <br><br>
+            <p v-if="this.message === 'incorrect_username'">Некорректное имя пользователя GitHub</p>
+            <p v-else-if="this.message === 'not_found'">Пользователь и его репозитории с таким именем пользователя Github не найдены</p>
+            <v-row v-else>
+              
+                <v-col v-for="item in resp"
+                style="width: 25%;max-width:25%;flex-basis: 25%" 
+                  
+                >
+                <v-card class="my-12" :id="item.id">    
+                <template slot="progress">
+                    <v-progress-linear
+                        color="deep-purple"
+                        height="10"
+                        indeterminate
+                    ></v-progress-linear>
+                    </template>
+                    <v-card-title>Репозиторий: {{ item.name }}</v-card-title>
+                    <v-card-text>
+                        <div class="my-4 text-subtitle-1">
+                            <a :href="item.html_url">Cсылка на репозиторий</a>
+                        </div>
+            
+                        <div>Основной язык репозитория: {{ item.language }}</div>
+                    </v-card-text>
+                </v-card>  
+                </v-col>
+              
+            </v-row>
+          </v-main>
+        
+        <v-sheet
+          id="scrolling-techniques-6"
+          class="overflow-y-auto"
+          max-height="1000"
+        >
+        </v-sheet>
+      </v-card>
+      
+    </v-app>
+    </div>
+   
+   
+      <script>
+        new Vue({
+            el: "#app2",
+            vuetify: new Vuetify(),
+            data: {
+                username: '',
+                resp: [],
+                message: '',
+            },
+            methods: {
+                send_repo_name() {
+                    return axios.post("/profile", {
+                        username: this.username
+                    }, {
+                        headers: {
+                            'Content-type': 'application/json',
+                        }
+                    }).then((response) => {
+                        parse_json = JSON.parse(JSON.stringify(response.data))
+                        this.resp = parse_json
+                        this.message = parse_json
+                    });
+                }
+            }
+        });
+      </script>
+   
+</body>
