@@ -1,6 +1,7 @@
 from fastapi import FastAPI, Request
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
+from requests.models import Response
 import uvicorn
 import os 
 import requests
@@ -8,6 +9,7 @@ from typing import Optional
 import json
 import re
 from fastapi.middleware.cors import CORSMiddleware
+import secure, time
 
 app = FastAPI()
 
@@ -24,8 +26,55 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+server = secure.Server().set("Secure")
+
+csp = (
+    secure.ContentSecurityPolicy()
+    .default_src("https://cdn.jsdelivr.net/npm/vue@2/dist/vue.js",
+    "https://unpkg.com/axios/dist/axios.min.js",
+    "https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.js",
+    "'unsafe-inline'",
+    "'unsafe-eval'")
+    .font_src("'self'",
+    "https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.min.css",
+    "https://cdn.jsdelivr.net/npm/@mdi/font@6.x/css/materialdesignicons.min.css",
+    "https://fonts.googleapis.com",
+    "https://fonts.gstatic.com",
+    "https://cdn.jsdelivr.net/npm/@mdi/font@6.x/fonts/",
+    "'unsafe-inline'"
+    )
+    .base_uri("'self'")
+    .connect_src("'self'")
+    .frame_src("'none'")
+    .img_src("'self'")
+    .style_src("'self'",
+    "https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.min.css",
+    "https://cdn.jsdelivr.net/npm/@mdi/font@6.x/css/materialdesignicons.min.css",
+    "https://fonts.googleapis.com",
+    "https://fonts.gstatic.com",
+    "'unsafe-inline'"
+    )
+)
+referrer = secure.ReferrerPolicy().no_referrer()
+
+cache_value = secure.CacheControl().must_revalidate()
+
+secure_headers = secure.Secure(
+    server=server,
+    csp=csp,
+    referrer=referrer,
+    cache=cache_value,
+    xxp=secure.XXSSProtection().set("1; mode=block")
+)
+
 class Profile(BaseModel):
     username: str
+
+@app.middleware("http")
+async def set_secure_headers(request, call_next):
+    response = await call_next(request)
+    secure_headers.framework.fastapi(response)
+    return response
 
 @app.post("/profile")
 async def create_item(data: Profile):
